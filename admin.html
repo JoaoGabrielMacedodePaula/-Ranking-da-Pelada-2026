@@ -143,11 +143,39 @@
                 const j = d.data();
                 const jId = d.id;
                 let pj = 0;
-                todasAsPartidas.forEach(p => { if (p.branco.includes(jId) || p.preto.includes(jId)) pj++; });
-                cacheJogadores.push({id: jId, ...j, totalJ: pj, saldo: j.saldo || 0, v: j.v || 0});
+                let vRecente = 0;
+                let count = 0;
+
+                // Cálculo de vitórias recentes para desempate
+                todasAsPartidas.forEach(p => {
+                    const noB = p.branco.includes(jId);
+                    const noP = p.preto.includes(jId);
+                    if (noB || noP) {
+                        pj++;
+                        if (count < 5) { // Analisa as últimas 5 partidas
+                            const ganhou = (noB && p.vencedor === 'branco') || (noP && p.vencedor === 'preto');
+                            if (ganhou && p.modo !== 'amistoso') vRecente += Math.pow(2, 5 - count);
+                            count++;
+                        }
+                    }
+                });
+
+                cacheJogadores.push({
+                    id: jId, ...j, 
+                    totalJ: pj, 
+                    saldo: j.saldo || 0, 
+                    v: j.v || 0, 
+                    vRecente: vRecente
+                });
             });
 
-            const jogadoresOrdenados = [...cacheJogadores].sort((a, b) => (b.saldo - a.saldo) || (b.v - a.v) || a.nome.localeCompare(b.nome));
+            // ORDENAÇÃO: Saldo > Vitórias > Vitórias Recentes > Nome
+            const jogadoresOrdenados = [...cacheJogadores].sort((a, b) => 
+                (b.saldo - a.saldo) || 
+                (b.v - a.v) || 
+                (b.vRecente - a.vRecente) || 
+                a.nome.localeCompare(b.nome)
+            );
 
             let pos = 1;
             jogadoresOrdenados.forEach(j => {
