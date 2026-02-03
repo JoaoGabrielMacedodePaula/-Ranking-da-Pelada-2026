@@ -12,13 +12,15 @@
         .sugestao-item:hover { background: rgba(16, 185, 129, 0.2); }
         .pos-badge { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; }
         
+        /* Ajuste do formulário para o botão OK não fugir */
         .grid-form-jogadores {
             display: grid;
-            grid-template-columns: 1fr 55px 55px;
-            gap: 8px;
+            grid-template-columns: 1fr 50px 50px; /* Reduzi um pouco para dar mais folga */
+            gap: 6px;
             width: 100%;
         }
-        /* Estilo para tag clicável de remoção */
+        .grid-form-jogadores input { min-width: 0; } /* Impede que o input force largura */
+
         .player-tag { cursor: pointer; transition: all 0.2s; }
         .player-tag:hover { background: #ef4444; color: white; }
     </style>
@@ -80,8 +82,8 @@
                     </div>
                 </section>
 
-                <section class="glass rounded-2xl h-[350px] flex flex-col overflow-hidden">
-                    <div class="p-4 bg-white/5 border-b border-white/5 text-[10px] font-bold uppercase tracking-widest">Histórico</div>
+                <section class="glass rounded-2xl h-[450px] flex flex-col overflow-hidden">
+                    <div class="p-4 bg-white/5 border-b border-white/5 text-[10px] font-bold uppercase tracking-widest">Histórico de Partidas</div>
                     <div id="lista-historico-partidas" class="overflow-y-auto p-4 space-y-3"></div>
                 </section>
 
@@ -93,7 +95,7 @@
                         <input type="hidden" id="edit-id">
                         <input type="text" id="add-nome" placeholder="Nome" class="bg-slate-800/50 p-3 rounded-xl border border-white/10 outline-none text-sm">
                         <input type="text" id="add-apelido" placeholder="GT" class="bg-slate-800/50 p-3 rounded-xl border border-white/10 text-center uppercase font-bold text-sm">
-                        <button id="btn-salvar-jogador" onclick="salvarNovoJogador()" class="bg-emerald-600 rounded-xl font-bold text-xs">OK</button>
+                        <button id="btn-salvar-jogador" onclick="salvarNovoJogador()" class="bg-emerald-600 rounded-xl font-bold text-xs uppercase">OK</button>
                     </div>
                     <div id="lista-jogadores" class="space-y-2"></div>
                 </section>
@@ -164,23 +166,31 @@
                             <td class="p-4 font-bold uppercase">${j.nome}</td>
                             <td class="p-4 text-right font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')} w-10">${j.saldo || 0}</td>
                             <td class="p-4 text-right text-slate-400 w-10">${j.v || 0}</td>
-                            <td class="p-4 text-right text-slate-600 w-10">${j.d || 0}</td>
+                            <td class="p-4 text-right text-slate-400 w-10">${j.d || 0}</td>
                         </tr>`;
                 }
             });
 
-            const snapP = await getDocs(query(collection(db, "partidas"), orderBy("data", "desc")));
+            const snapP = await getDocs(query(collection(db, "partidas"), orderBy("timestamp", "desc")));
             const hist = document.getElementById('lista-historico-partidas');
             hist.innerHTML = '';
+            
             snapP.forEach(d => {
                 const p = d.data();
+                const nomesB = p.branco.map(id => cacheJogadores.find(j => j.id === id)?.nome || "Removido").join(", ");
+                const nomesP = p.preto.map(id => cacheJogadores.find(j => j.id === id)?.nome || "Removido").join(", ");
+
                 hist.innerHTML += `
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 text-[10px]">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-black text-emerald-500 uppercase italic">Vencedor: ${p.vencedor} ${p.penaltis ? '(P)' : ''}</span>
-                            <button onclick="excluirPartida('${d.id}')" class="text-red-500 font-bold uppercase text-[8px]">Excluir</button>
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/5 text-[10px] space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-emerald-500 uppercase italic">Vencedor: ${p.vencedor} ${p.penaltis ? '(Pês)' : ''}</span>
+                            <button onclick="excluirPartida('${d.id}')" class="text-red-500 font-bold uppercase text-[8px] border border-red-500/20 px-2 py-1 rounded-lg">Excluir</button>
                         </div>
-                        <div class="opacity-60">${p.data.split('-').reverse().join('/')} - Modo: ${p.modo}</div>
+                        <div class="grid grid-cols-1 gap-1 border-t border-white/5 pt-2">
+                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Branco:</strong> <span class="text-slate-300">${nomesB}</span></div>
+                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Preto:</strong> <span class="text-slate-300">${nomesP}</span></div>
+                        </div>
+                        <div class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">${p.data.split('-').reverse().join('/')} • MODO: ${p.modo}</div>
                     </div>`;
             });
             lucide.createIcons();
@@ -203,7 +213,7 @@
         }
 
         window.resetarTudo = async () => {
-            if(!confirm("Zerar TODO o ranking?")) return;
+            if(!confirm("CUIDADO: Isto vai apagar todos os jogos e zerar os placares! Confirmas?")) return;
             const batch = writeBatch(db);
             const jSnap = await getDocs(collection(db, "jogadores"));
             jSnap.forEach(d => batch.update(doc(db, "jogadores", d.id), { v: 0, d: 0, saldo: 0, historico: [] }));
@@ -215,7 +225,7 @@
 
         window.finalizarPartida = async () => {
             const data = document.getElementById('data-jogo').value;
-            if(!timeB.length || !timeP.length || !data) return alert("Preencha tudo!");
+            if(!timeB.length || !timeP.length || !data) return alert("Preencha times e data!");
             const vence = document.getElementById('vencedor').value, modo = document.getElementById('modo-ponto').value;
             const penaltis = document.getElementById('penaltis').checked;
             const batch = writeBatch(db);
@@ -241,11 +251,11 @@
             bBox.innerHTML = ''; pBox.innerHTML = '';
             timeB.forEach(id => {
                 const j = cacheJogadores.find(x => x.id === id);
-                bBox.innerHTML += `<div onclick="removerDaLista('${id}', 'tags-branco')" class="player-tag bg-slate-800 px-2 py-1 rounded text-[10px] border border-white/5">${j.nome}</div>`;
+                bBox.innerHTML += `<div onclick="removerDaLista('${id}', 'tags-branco')" class="player-tag bg-slate-800 px-2 py-1 rounded text-[10px] border border-white/5 hover:bg-red-500 transition-colors">${j.nome}</div>`;
             });
             timeP.forEach(id => {
                 const j = cacheJogadores.find(x => x.id === id);
-                pBox.innerHTML += `<div onclick="removerDaLista('${id}', 'tags-preto')" class="player-tag bg-slate-800 px-2 py-1 rounded text-[10px] border border-white/5">${j.nome}</div>`;
+                pBox.innerHTML += `<div onclick="removerDaLista('${id}', 'tags-preto')" class="player-tag bg-slate-800 px-2 py-1 rounded text-[10px] border border-white/5 hover:bg-red-500 transition-colors">${j.nome}</div>`;
             });
         }
 
