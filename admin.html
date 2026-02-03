@@ -14,6 +14,9 @@
         
         /* Grid ultra compacta para celulares pequenos */
         .grid-form-jogadores { display: grid; grid-template-columns: 1fr 38px 38px; gap: 4px; width: 100%; }
+        
+        /* Classe para alinhar perfeitamente Título e Número */
+        .col-stats { width: 40px; text-align: center; flex-shrink: 0; }
         .player-tag { cursor: pointer; transition: all 0.2s; }
         .player-tag:hover { background: #ef4444; color: white; }
     </style>
@@ -90,12 +93,12 @@
 
             <div class="order-2 lg:order-1 lg:col-span-5">
                 <section class="glass rounded-2xl overflow-hidden flex flex-col h-[600px] lg:h-auto">
-                    <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                    <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center px-4">
                         <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-500">Ranking Atual</span>
                         <div class="flex text-[9px] font-black text-slate-500 uppercase">
-                            <span class="w-10 text-center">S</span>
-                            <span class="w-10 text-center">V</span>
-                            <span class="w-10 text-center">P</span>
+                            <span class="col-stats">S</span>
+                            <span class="col-stats">V</span>
+                            <span class="col-stats">P</span>
                         </div>
                     </div>
                     <div class="overflow-y-auto">
@@ -144,32 +147,15 @@
             snapJ.forEach(d => {
                 const j = d.data();
                 const jId = d.id;
-                
                 let pj = 0;
-                let streakValue = 0;
-                let count = 0;
-
-                for (let p of todasAsPartidas) {
-                    const noBranco = p.branco.includes(jId);
-                    const noPreto = p.preto.includes(jId);
-                    if (noBranco || noPreto) {
-                        pj++;
-                        if (count < 5) {
-                            const venceu = (noBranco && p.vencedor === 'branco') || (noPreto && p.vencedor === 'preto');
-                            if (venceu && p.modo !== 'amistoso') streakValue += Math.pow(2, 5 - count);
-                            count++;
-                        }
-                    }
-                }
-                const v = j.v || 0;
-                const aprov = pj > 0 ? Math.round((v / pj) * 100) : 0;
-                cacheJogadores.push({id: jId, ...j, totalJ: pj, streakValue, v, d: j.d || 0, saldo: j.saldo || 0, aprov});
+                todasAsPartidas.forEach(p => {
+                    if (p.branco.includes(jId) || p.preto.includes(jId)) pj++;
+                });
+                cacheJogadores.push({id: jId, ...j, totalJ: pj, saldo: j.saldo || 0, v: j.v || 0});
             });
 
-            const jogadoresOrdenados = [...cacheJogadores].sort((a, b) => {
-                let res = (b.aprov - a.aprov) || (b.saldo - a.saldo) || (b.totalJ - a.totalJ) || (b.streakValue - a.streakValue);
-                return res || a.nome.localeCompare(b.nome);
-            });
+            // Ordenação: Saldo > Vitórias > Nome
+            const jogadoresOrdenados = [...cacheJogadores].sort((a, b) => (b.saldo - a.saldo) || (b.v - a.v) || a.nome.localeCompare(b.nome));
 
             let pos = 1;
             jogadoresOrdenados.forEach(j => {
@@ -187,13 +173,10 @@
                     ranking.innerHTML += `
                         <tr class="text-[11px] border-b border-white/5 h-12">
                             <td class="pl-4 w-8"><span class="pos-badge">${pos++}º</span></td>
-                            <td class="px-2 font-bold uppercase text-slate-300 leading-tight">
-                                <div class="truncate max-w-[120px] lg:max-w-none">${j.nome}</div>
-                                <div class="text-[8px] text-slate-500 font-normal">${j.aprov}%</div>
-                            </td>
-                            <td class="w-10 text-center font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')}">${j.saldo || 0}</td>
-                            <td class="w-10 text-center text-slate-400">${j.v || 0}</td>
-                            <td class="w-10 text-center text-slate-300 font-bold">${j.totalJ || 0}</td>
+                            <td class="px-2 font-bold uppercase text-slate-300 truncate max-w-[110px]">${j.nome}</td>
+                            <td class="col-stats font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')}">${j.saldo}</td>
+                            <td class="col-stats text-slate-400">${j.v}</td>
+                            <td class="col-stats text-slate-300 font-bold">${j.totalJ}</td>
                         </tr>`;
                 }
             });
@@ -213,42 +196,13 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-1 border-t border-white/5 pt-2">
-                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Branco:</strong> <span class="text-slate-300">${nomesB}</span></div>
-                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Preto:</strong> <span class="text-slate-300">${nomesP}</span></div>
+                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Branco:</strong> <span class="text-slate-300 text-xs">${nomesB}</span></div>
+                            <div class="text-[9px]"><strong class="text-white/40 uppercase">Preto:</strong> <span class="text-slate-300 text-xs">${nomesP}</span></div>
                         </div>
                         <div class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">${p.data.split('-').reverse().join('/')} • MODO: ${p.modo}</div>
                     </div>`;
             });
             lucide.createIcons();
-        }
-
-        window.editarPartida = async (id) => {
-            const p = todasAsPartidas.find(x => x.id === id);
-            document.getElementById('edit-partida-id').value = id;
-            document.getElementById('label-partida').textContent = "Editando Partida";
-            document.getElementById('btn-gravar-partida').textContent = "Salvar Alterações";
-            document.getElementById('btn-gravar-partida').classList.replace('bg-emerald-600', 'bg-cyan-600');
-            document.getElementById('modo-ponto').value = p.modo;
-            document.getElementById('vencedor').value = p.vencedor;
-            document.getElementById('penaltis').checked = p.penaltis;
-            document.getElementById('data-jogo').value = p.data;
-            timeB = [...p.branco]; timeP = [...p.preto];
-            renderizarTags();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        window.excluirPartida = async (id) => {
-            if (!confirm("Excluir partida? Pontos serão estornados!")) return;
-            const p = todasAsPartidas.find(x => x.id === id);
-            const batch = writeBatch(db);
-            if (p.modo !== 'amistoso') {
-                const win = p.vencedor === 'branco' ? p.branco : p.preto, lose = p.vencedor === 'branco' ? p.preto : p.branco;
-                win.forEach(jId => batch.update(doc(db, "jogadores", jId), { v: increment(-1), saldo: increment(-1) }));
-                if(p.modo === 'normal') lose.forEach(jId => batch.update(doc(db, "jogadores", jId), { d: increment(-1), saldo: increment(1) }));
-            }
-            batch.delete(doc(db, "partidas", id));
-            await batch.commit();
-            location.reload();
         }
 
         window.finalizarPartida = async () => {
@@ -311,26 +265,4 @@
                 const d = document.createElement('div'); d.className = "p-3 sugestao-item cursor-pointer border-b border-white/5 text-xs font-bold";
                 d.textContent = j.nome; d.onclick = () => { 
                     if(tagsId === 'tags-branco') timeB.push(j.id); else timeP.push(j.id);
-                    renderizarTags(); input.value = ''; box.classList.add('hidden'); 
-                };
-                box.appendChild(d);
-            });
-            box.classList.remove('hidden');
-        }
-
-        window.salvarNovoJogador = async () => {
-            const id = document.getElementById('edit-id').value, n = document.getElementById('add-nome').value, gt = document.getElementById('add-apelido').value.toUpperCase();
-            if(!n || !gt) return;
-            if(id) await updateDoc(doc(db, "jogadores", id), { nome: n, apelido: gt });
-            else await addDoc(collection(db, "jogadores"), { nome: n, apelido: gt, v: 0, d: 0, saldo: 0, visivel: true });
-            location.reload();
-        }
-
-        window.toggleVis = async (id, s) => { await updateDoc(doc(db, "jogadores", id), { visivel: !s }); location.reload(); };
-        window.prepararEdicao = (id, n, a) => { document.getElementById('edit-id').value = id; document.getElementById('add-nome').value = n; document.getElementById('add-apelido').value = a; };
-        window.excluirJogador = async (id) => { if(confirm("Eliminar jogador?")) { await deleteDoc(doc(db, "jogadores", id)); location.reload(); } };
-
-        init();
-    </script>
-</body>
-</html>
+                    renderizarTags(); input.value = ''; box.classList.add('hidden');
