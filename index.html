@@ -140,14 +140,12 @@
                             }
                         }
                         const v = j.v || 0;
-                        const vRecentes = histForma.filter(r => r === 'v').length;
-                        // Streak para desempate: v/d/v ganha de v/v/d porque o 1º jogo (índice 0) é o mais recente
                         let streakValue = 0;
                         for(let i=0; i<histForma.length; i++) {
                             if(histForma[i] === 'v') streakValue += Math.pow(2, 5-i);
                         }
 
-                        dadosJogadores.push({ ...j, id: jId, v, d: j.d || 0, saldo: j.saldo || 0, totalJ: pj, aprov: pj > 0 ? Math.round((v / pj) * 100) : 0, hist: [...histForma].reverse(), rawHist: histForma, streakValue, vRecentes });
+                        dadosJogadores.push({ ...j, id: jId, v, d: j.d || 0, saldo: j.saldo || 0, totalJ: pj, aprov: pj > 0 ? Math.round((v / pj) * 100) : 0, hist: [...histForma].reverse(), rawHist: histForma, streakValue });
                     }
                 });
                 renderizarRanking();
@@ -157,20 +155,28 @@
 
         function renderizarRanking() {
             const tbody = document.getElementById('tabela-body');
+            const mult = ordenacaoAtual.crescente ? 1 : -1;
             
             dadosJogadores.sort((a, b) => {
                 let res = 0;
                 const c = ordenacaoAtual.campo;
 
-                if (c === 'saldo') res = a.saldo - b.saldo || a.v - b.v || a.streakValue - b.streakValue;
-                else if (c === 'v') res = a.v - b.v || a.totalJ - b.totalJ || a.streakValue - b.streakValue;
-                else if (c === 'd') res = a.d - b.d || b.totalJ - a.totalJ || b.streakValue - a.streakValue;
-                else if (c === 'totalJ') res = a.totalJ - b.totalJ || a.v - b.v || a.streakValue - b.streakValue;
-                else if (c === 'aprov') res = a.aprov - b.aprov || a.totalJ - b.totalJ || a.streakValue - b.streakValue;
-                else if (c === 'recentes') res = a.streakValue - b.streakValue || a.saldo - b.saldo || a.totalJ - b.totalJ;
+                if (c === 'saldo') {
+                    res = (a.saldo - b.saldo) || (a.v - b.v) || (a.streakValue - b.streakValue);
+                } else if (c === 'v') {
+                    res = (a.v - b.v) || (a.saldo - b.saldo) || (a.streakValue - b.streakValue);
+                } else if (c === 'd') {
+                    res = (a.d - b.d) || ((b.saldo - a.saldo) * mult) || ((b.streakValue - a.streakValue) * mult);
+                } else if (c === 'totalJ') {
+                    res = (a.totalJ - b.totalJ) || (a.saldo - b.saldo) || (a.streakValue - b.streakValue);
+                } else if (c === 'aprov') {
+                    res = (a.aprov - b.aprov) || (a.streakValue - b.streakValue) || (a.saldo - b.saldo);
+                } else if (c === 'recentes') {
+                    res = (a.streakValue - b.streakValue) || (a.saldo - b.saldo) || (a.totalJ - b.totalJ);
+                }
 
-                if (!ordenacaoAtual.crescente) res = -res;
-                return res || a.nome.localeCompare(b.nome);
+                if (res !== 0) return res * mult;
+                return mult === -1 ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome);
             });
 
             tbody.innerHTML = '';
@@ -238,7 +244,7 @@
                     <div class="glass p-3 rounded-lg border border-white/5">
                         <div class="flex justify-between items-center mb-2 text-[8px] font-black uppercase text-slate-500 border-b border-white/5 pb-1.5">
                             <span>${p.data.split('-').reverse().join('/')}</span>
-                            <span class="text-emerald-500/50">${p.modo}</span>
+                            <span class="text-emerald-500/50 uppercase">${p.modo}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-3 text-[9px]">
                             <div><p class="text-[7px] text-slate-500 uppercase mb-0.5">Branco</p><p class="text-slate-300 font-medium leading-tight">${nomesB.join(', ')}</p></div>
