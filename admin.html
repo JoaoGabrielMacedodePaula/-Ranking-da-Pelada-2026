@@ -11,8 +11,9 @@
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); }
         .sugestao-item:hover { background: rgba(16, 185, 129, 0.2); }
         .pos-badge { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; }
-        /* Grid ajustada: Nome ocupa o espaço disponível, GT e OK ficam fixos e pequenos */
-        .grid-form-jogadores { display: grid; grid-template-columns: 1fr 45px 45px; gap: 6px; width: 100%; }
+        
+        /* Grid ultra compacta para celulares pequenos */
+        .grid-form-jogadores { display: grid; grid-template-columns: 1fr 38px 38px; gap: 4px; width: 100%; }
         .player-tag { cursor: pointer; transition: all 0.2s; }
         .player-tag:hover { background: #ef4444; color: white; }
     </style>
@@ -79,9 +80,9 @@
                     </h2>
                     <div class="grid-form-jogadores mb-6">
                         <input type="hidden" id="edit-id">
-                        <input type="text" id="add-nome" placeholder="Nome" class="bg-slate-800/50 p-3 rounded-xl border border-white/10 outline-none text-sm">
-                        <input type="text" id="add-apelido" placeholder="GT" class="bg-slate-800/50 p-2 rounded-xl border border-white/10 text-center uppercase font-bold text-[10px]">
-                        <button id="btn-salvar-jogador" onclick="salvarNovoJogador()" class="bg-emerald-600 rounded-xl font-bold text-[10px] uppercase">OK</button>
+                        <input type="text" id="add-nome" placeholder="Nome" class="bg-slate-800/50 px-3 py-2 rounded-lg border border-white/10 outline-none text-sm w-full">
+                        <input type="text" id="add-apelido" placeholder="GT" class="bg-slate-800/50 px-1 py-2 rounded-lg border border-white/10 text-center uppercase font-bold text-[9px] w-full">
+                        <button id="btn-salvar-jogador" onclick="salvarNovoJogador()" class="bg-emerald-600 rounded-lg font-bold text-[9px] uppercase w-full">OK</button>
                     </div>
                     <div id="lista-jogadores" class="space-y-2"></div>
                 </section>
@@ -90,13 +91,15 @@
             <div class="order-2 lg:order-1 lg:col-span-5">
                 <section class="glass rounded-2xl overflow-hidden flex flex-col h-[600px] lg:h-auto">
                     <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-500">Ranking Atual (% / Saldo / P)</span>
-                        <div class="flex gap-6 text-[9px] font-black text-slate-500 uppercase">
-                            <span>S</span><span>V</span><span>P</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-500">Ranking Atual</span>
+                        <div class="flex text-[9px] font-black text-slate-500 uppercase">
+                            <span class="w-10 text-center">S</span>
+                            <span class="w-10 text-center">V</span>
+                            <span class="w-10 text-center">P</span>
                         </div>
                     </div>
                     <div class="overflow-y-auto">
-                        <table class="w-full text-left">
+                        <table class="w-full border-collapse">
                             <tbody id="ranking-body" class="divide-y divide-white/5"></tbody>
                         </table>
                     </div>
@@ -182,15 +185,15 @@
 
                 if(j.visivel !== false) {
                     ranking.innerHTML += `
-                        <tr class="text-[11px] border-b border-white/5">
-                            <td class="p-4 w-10"><span class="pos-badge">${pos++}º</span></td>
-                            <td class="p-4 font-bold uppercase text-slate-300">
-                                ${j.nome} 
-                                <span class="text-[8px] text-slate-500 ml-1">(${j.aprov}%)</span>
+                        <tr class="text-[11px] border-b border-white/5 h-12">
+                            <td class="pl-4 w-8"><span class="pos-badge">${pos++}º</span></td>
+                            <td class="px-2 font-bold uppercase text-slate-300 leading-tight">
+                                <div class="truncate max-w-[120px] lg:max-w-none">${j.nome}</div>
+                                <div class="text-[8px] text-slate-500 font-normal">${j.aprov}%</div>
                             </td>
-                            <td class="p-4 text-right font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')} w-10">${j.saldo || 0}</td>
-                            <td class="p-4 text-right text-slate-400 w-10">${j.v || 0}</td>
-                            <td class="p-4 text-right text-slate-300 font-bold w-10">${j.totalJ || 0}</td>
+                            <td class="w-10 text-center font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')}">${j.saldo || 0}</td>
+                            <td class="w-10 text-center text-slate-400">${j.v || 0}</td>
+                            <td class="w-10 text-center text-slate-300 font-bold">${j.totalJ || 0}</td>
                         </tr>`;
                 }
             });
