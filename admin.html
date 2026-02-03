@@ -89,9 +89,9 @@
             <div class="order-2 lg:order-1 lg:col-span-5">
                 <section class="glass rounded-2xl overflow-hidden flex flex-col h-[600px] lg:h-auto">
                     <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-500">Ranking Atual</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-500">Ranking Atual (% / Saldo / P)</span>
                         <div class="flex gap-6 text-[9px] font-black text-slate-500 uppercase">
-                            <span>S</span><span>V</span><span>D</span>
+                            <span>S</span><span>V</span><span>P</span>
                         </div>
                     </div>
                     <div class="overflow-y-auto">
@@ -157,11 +157,14 @@
                         }
                     }
                 }
-                cacheJogadores.push({id: jId, ...j, totalJ: pj, streakValue, v: j.v || 0, d: j.d || 0, saldo: j.saldo || 0});
+                const v = j.v || 0;
+                const aprov = pj > 0 ? Math.round((v / pj) * 100) : 0;
+                cacheJogadores.push({id: jId, ...j, totalJ: pj, streakValue, v, d: j.d || 0, saldo: j.saldo || 0, aprov});
             });
 
+            // NOVA ORDENAÇÃO: % -> Saldo -> + Partidas -> + Recentes
             const jogadoresOrdenados = [...cacheJogadores].sort((a, b) => {
-                let res = (b.saldo - a.saldo) || (b.totalJ - a.totalJ) || (b.streakValue - a.streakValue);
+                let res = (b.aprov - a.aprov) || (b.saldo - a.saldo) || (b.totalJ - a.totalJ) || (b.streakValue - a.streakValue);
                 return res || a.nome.localeCompare(b.nome);
             });
 
@@ -181,10 +184,13 @@
                     ranking.innerHTML += `
                         <tr class="text-[11px] border-b border-white/5">
                             <td class="p-4 w-10"><span class="pos-badge">${pos++}º</span></td>
-                            <td class="p-4 font-bold uppercase text-slate-300">${j.nome}</td>
+                            <td class="p-4 font-bold uppercase text-slate-300">
+                                ${j.nome} 
+                                <span class="text-[8px] text-slate-500 ml-1">(${j.aprov}%)</span>
+                            </td>
                             <td class="p-4 text-right font-black ${j.saldo > 0 ? 'text-emerald-400' : (j.saldo < 0 ? 'text-red-400' : 'text-slate-500')} w-10">${j.saldo || 0}</td>
                             <td class="p-4 text-right text-slate-400 w-10">${j.v || 0}</td>
-                            <td class="p-4 text-right text-slate-400 w-10">${j.d || 0}</td>
+                            <td class="p-4 text-right text-slate-300 font-bold w-10">${j.totalJ || 0}</td>
                         </tr>`;
                 }
             });
