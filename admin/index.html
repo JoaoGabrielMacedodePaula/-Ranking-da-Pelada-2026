@@ -294,13 +294,13 @@
         init();
     </script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // Registra o sw.js que está na pasta raiz
-          navigator.serviceWorker.register('../sw.js');
-        });
-      }
-    </script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // O ../ é fundamental agora!
+      navigator.serviceWorker.register('../sw.js');
+    });
+  }
+</script>
 </body>
 </html>
 </body>
