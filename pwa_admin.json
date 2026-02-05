@@ -1,5 +1,6 @@
 {
-  "name": "Admin - Ranking",
+  "id": "app-pelada-admin",
+  "name": "Painel Admin Pelada",
   "short_name": "Admin",
   "start_url": "/app/admin/index.html",
   "scope": "/app/admin/",
