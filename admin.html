@@ -293,6 +293,17 @@
         window.excluirJogador = async (id) => { if(confirm("Eliminar jogador?")) { await deleteDoc(doc(db, "jogadores", id)); location.reload(); } };
         init();
     </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Registra o sw.js que está na pasta raiz
+          navigator.serviceWorker.register('../sw.js');
+        });
+      }
+    </script>
 </body>
 </html>
+</body>
+</html>
+
 
