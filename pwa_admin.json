@@ -1,7 +1,8 @@
 {
   "name": "Admin - Ranking",
   "short_name": "Admin",
-  "start_url": "./index.html",
+  "start_url": "/app/admin/index.html",
+  "scope": "/app/admin/",
   "display": "standalone",
   "background_color": "#0a0b10",
   "theme_color": "#ef4444",
